@@ -214,10 +214,15 @@ class FCS(BaseLearner):
 
             for i,instance  in enumerate(train_loader):
 
-                (_, inputs, targets,inputs_aug) =instance 
+                # Adjust unpacking to handle datasets with fewer elements
+                if len(instance) == 2:
+                    _, inputs, targets = instance[0], instance[1], None
+                    inputs_aug = None
+                else:
+                    _, inputs, targets, inputs_aug = instance
+
                 inputs, targets = inputs.to(
                     self._device, non_blocking=True), targets.to(self._device, non_blocking=True)
-                inputs_aug = inputs_aug.to(self._device, non_blocking=True)
                 #image_q, image_k = image_q.to(
                 #    self._device, non_blocking=True), image_k.to(self._device, non_blocking=True)
                     
