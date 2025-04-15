@@ -154,7 +154,6 @@ class DummyDataset(Dataset):
                 transforms.RandomGrayscale(p=0.2),
                 transforms.ColorJitter(0.4, 0.4, 0.4, 0.4),
                 transforms.RandomHorizontalFlip(),
-                transforms.RandomRotation(180),  # Added 180-degree rotation
                 transforms.ToTensor(),
                 normalize,
             ]
