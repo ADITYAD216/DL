@@ -512,7 +512,7 @@ class FCS(BaseLearner):
         logging.info(f"Number of mixup_inputs: {len(mixup_inputs)}")
         logging.info(f"Number of mixup_targets: {len(mixup_targets)}")
 
-        if len(mixup_inputs) > 0:
+        if len(mixup_inputs) > 0 and len(mixup_targets) > 0:
             mixup_inputs = torch.cat(mixup_inputs, dim=0)
             mixup_targets = torch.cat(mixup_targets, dim=0)
 
@@ -527,7 +527,7 @@ class FCS(BaseLearner):
         logging.info(f"Final shape of inputs: {inputs.shape}")
         logging.info(f"Final shape of targets: {targets.shape}")
 
-        return inputs, targets, inputs_aug2
+        return inputs, targets, inputs_aug
     
     def _map_targets(self, select_targets, perm_targets):
         # Log the inputs for debugging
