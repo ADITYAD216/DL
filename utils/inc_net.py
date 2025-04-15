@@ -17,6 +17,8 @@ def get_convnet(args, pretrained=False):
     name = args["convnet_type"].lower()
     if name == "resnet32":
         return resnet32()
+    elif name == "resnet50":
+    return resnet50(pretrained=pretrained, args=args)
     elif name == "resnet12":
         return resnet12(pretrained=pretrained, args=args)
     elif name == "resnet18":
