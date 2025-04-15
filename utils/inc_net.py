@@ -8,7 +8,7 @@ from convs.ucir_cifar_resnet import resnet32 as cosine_resnet32
 from convs.ucir_resnet import resnet18 as cosine_resnet18
 from convs.ucir_resnet import resnet34 as cosine_resnet34
 from convs.ucir_resnet import resnet50 as cosine_resnet50
-from convs.linears import SingleLinearLayer, SmallMLP
+from convs.linears import FCSSimpleLinear, SingleLinearLayer, SmallMLP
 from convs.modified_represnet import resnet18_rep,resnet34_rep
 from convs.resnet_cbam import resnet18_cbam,resnet34_cbam,resnet50_cbam
 
@@ -69,7 +69,10 @@ class BaseNet(nn.Module):
             'logits': logits
         }
         """
-        out.update(x)
+        if isinstance(x, dict):
+            out.update(x)
+        else:
+            out["features"] = x
 
         return out
 
@@ -126,7 +129,7 @@ class FCSIncrementalNet(BaseNet):
         self.fc.weight.data[-increment:, :] *= gamma
 
     def generate_fc(self, in_dim, out_dim):
-        fc = SingleLinearLayer(in_dim, out_dim)
+        fc = FCSSimpleLinear(in_dim, out_dim)
 
         return fc
 
@@ -171,7 +174,7 @@ class FCSNet(FCSIncrementalNet):
         super().__init__(args, pretrained,gradcam)
         self.args = args
 
-        self.transfer = SingleLinearLayer(self.feature_dim, self.feature_dim)
+        self.transfer = FCSSimpleLinear(self.feature_dim, self.feature_dim)
             
     def update_fc(self, num_old, num_total, num_aux):
 
@@ -185,7 +188,7 @@ class FCSNet(FCSIncrementalNet):
         self.fc = fc
         
 
-        transfer = SingleLinearLayer(self.feature_dim, self.feature_dim)
+        transfer = FCSSimpleLinear(self.feature_dim, self.feature_dim)
         
         transfer.weight = nn.Parameter(torch.eye(self.feature_dim))
         transfer.bias = nn.Parameter(torch.zeros(self.feature_dim))
