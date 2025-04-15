@@ -413,7 +413,7 @@ class FCS(BaseLearner):
             self.af = []
 
             # Initialize optimizer and scheduler
-            optimizer = torch.optim.SGD(self.model.parameters(), lr=self.args["lr"], weight_decay=self.args["weight_decay"])
+            optimizer = torch.optim.SGD(self._network.parameters(), lr=self.args["lr"], weight_decay=self.args["weight_decay"])
             scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=self.args["step_size"], gamma=self.args["gamma"])
 
             # Train the model
