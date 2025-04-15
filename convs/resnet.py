@@ -371,7 +371,6 @@ def wide_resnet101_2(pretrained=False, progress=True, **kwargs):
     return _resnet('wide_resnet101_2', Bottleneck, [3, 4, 23, 3],
                    pretrained, progress, **kwargs)
 
-
 def resnet12(pretrained=False, progress=True, **kwargs):
     """Basic ResNet-12 implementation."""
     return _resnet('resnet12', BasicBlock, [1, 1, 1, 1], pretrained, progress, **kwargs)
