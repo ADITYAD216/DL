@@ -129,7 +129,7 @@ class FCSIncrementalNet(BaseNet):
         self.fc.weight.data[-increment:, :] *= gamma
 
     def generate_fc(self, in_dim, out_dim):
-        fc = FCSSimpleLinear(in_dim, out_dim)
+        fc = SingleLinearLayer(in_dim, out_dim)
 
         return fc
 
@@ -174,7 +174,7 @@ class FCSNet(FCSIncrementalNet):
         super().__init__(args, pretrained,gradcam)
         self.args = args
 
-        self.transfer = FCSSimpleLinear(self.feature_dim, self.feature_dim)
+        self.transfer = SingleLinearLayer(self.feature_dim, self.feature_dim)
             
     def update_fc(self, num_old, num_total, num_aux):
 
@@ -188,7 +188,7 @@ class FCSNet(FCSIncrementalNet):
         self.fc = fc
         
 
-        transfer = FCSSimpleLinear(self.feature_dim, self.feature_dim)
+        transfer = SingleLinearLayer(self.feature_dim, self.feature_dim)
         
         transfer.weight = nn.Parameter(torch.eye(self.feature_dim))
         transfer.bias = nn.Parameter(torch.zeros(self.feature_dim))
