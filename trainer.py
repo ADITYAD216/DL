@@ -103,7 +103,7 @@ def _set_device(args):
         else:
             raise ValueError(f"Unsupported device type: {type(dev)} — {dev}")
 
-    args["device"] = gpus
+    args["device"]=gpus
 
 
 def _set_random():
