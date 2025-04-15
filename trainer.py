@@ -7,6 +7,8 @@ from utils.data_manager import DataManager
 from utils.toolkit import count_parameters
 import os
 import json
+import time
+
 
 def train(args):
     seed_list = copy.deepcopy(args["seed"])
@@ -61,6 +63,13 @@ def _train(args):
     model = factory.get_model(args["model_name"], args)
 
     cnn_curve = {"top1": [], "top5": []}
+    metrics = {
+        "final_accuracy": None,
+        "average_forgetting": None,
+        "training_time": None,
+    }
+
+    start_time = time.time()
 
     for task in range(data_manager.nb_tasks):
         logging.info("All params: {}".format(count_parameters(model._network)))
@@ -78,32 +87,40 @@ def _train(args):
 
         logging.info("CNN top1 curve: {}".format(cnn_curve["top1"]))
         logging.info("CNN top5 curve: {}".format(cnn_curve["top5"]))
-        
+
         cnn_accy, nme_accy = model.eval_task(only_new=True)
         cnn_accy, nme_accy = model.eval_task(only_old=True)
 
-        
         model.after_task()
-        if args["is_task0"] :
-            break 
+        if args["is_task0"]:
+            break
+
+    end_time = time.time()
+    metrics["training_time"] = end_time - start_time
+    metrics["final_accuracy"] = cnn_curve["top1"][-1]
+    metrics["average_forgetting"] = sum(
+        [
+            max(cnn_curve["top1"][:i]) - acc
+            for i, acc in enumerate(cnn_curve["top1"], start=1)
+        ]
+    ) / len(cnn_curve["top1"])
+
+    logging.info("Metrics: {}".format(metrics))
+
+
 def _set_device(args):
-    devs = args["device"]
+    device_type = args["device"]
     gpus = []
 
-    if not isinstance(devs, list):
-        devs = [devs]
-
-    for dev in devs:
-        if isinstance(dev, torch.device):
-            gpus.append(dev)
-        elif isinstance(dev, int):
-            gpus.append(torch.device("cpu") if dev == -1 else torch.device(f"cuda:{dev}"))
-        elif isinstance(dev, str):
-            gpus.append(torch.device(dev))
+    for device in device_type:
+        if device_type == -1:
+            device = torch.device("cpu")
         else:
-            raise ValueError(f"Unsupported device type: {type(dev)} — {dev}")
+            device = torch.device("cuda:{}".format(device))
 
-    args["device"]=gpus
+        gpus.append(device)
+
+    args["device"] = gpus
 
 
 def _set_random():
