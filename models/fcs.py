@@ -125,14 +125,10 @@ class FCS(BaseLearner):
             detail = p.split('/')
             l = "{}_{}_{}_{}.pkl".format('fcs',detail[-3],detail[-2],self._cur_task)
 
-            l = os.path.join(p, l)
-            if not os.path.exists(l):
-                logging.warning(f"Checkpoint file {l} not found. Skipping loading.")
-                resume = False
-            else:
-                print(f'Loading from {l}')
-                self._network.load_state_dict(torch.load(l)["model_state_dict"], strict=False)
-                resume = True
+            l = os.path.join(p,l)
+            print('load from {}'.format(l))
+            self._network.load_state_dict(torch.load(l)["model_state_dict"],strict=False)
+            resume = True
 
         self._network.to(self._device)
 
@@ -186,34 +182,59 @@ class FCS(BaseLearner):
             self._radius = np.sqrt(np.mean(self._radiuses))
     
   
-
     def _train_function(self, train_loader, test_loader, optimizer, scheduler):
         prog_bar = tqdm(range(self._epoch_num))
         for _, epoch in enumerate(prog_bar):
             self._network.train()
-            losses_clf = 0.0
+            losses = 0.
+            losses_clf, losses_fkd, losses_proto, losses_transfer,losses_contrast\
+                = 0., 0., 0. ,0., 0. 
             correct, total = 0, 0
 
-            for i, instance in enumerate(train_loader):
-                (_, inputs, targets, inputs_aug) = instance
-                inputs, targets = inputs.to(self._device, non_blocking=True), targets.to(self._device, non_blocking=True)
+            for i,instance  in enumerate(train_loader):
 
+                (_, inputs, targets,inputs_aug) =instance 
+                inputs, targets = inputs.to(
+                    self._device, non_blocking=True), targets.to(self._device, non_blocking=True)
+                inputs_aug = inputs_aug.to(self._device, non_blocking=True)
+                #image_q, image_k = image_q.to(
+                #    self._device, non_blocking=True), image_k.to(self._device, non_blocking=True)
+                    
+                inputs,targets,inputs_aug = self._class_aug(inputs,targets,inputs_aug=inputs_aug)
+
+                logits, losses_all  = self._compute_il2a_loss(inputs,targets,image_k=inputs_aug)
+                loss_clf= losses_all["loss_clf"]
+                loss_fkd= losses_all["loss_fkd"]
+                loss_proto= losses_all["loss_proto"]
+                loss_transfer= losses_all["loss_transfer"]
+                loss_contrast= losses_all["loss_contrast"]
+                loss = loss_clf + loss_fkd + loss_proto  + loss_transfer +loss_contrast
                 optimizer.zero_grad()
-                outputs = self._network(inputs)
-                logits = outputs["logits"]  # Extract logits from the dictionary
-                loss_clf = F.cross_entropy(logits, targets)
-                losses_clf += loss_clf.item()
-
-                loss_clf.backward()
+                loss.backward()
                 optimizer.step()
-
-                _, predicted = logits.max(1)
-                correct += predicted.eq(targets).sum().item()
-                total += targets.size(0)
-
+                losses += loss.item()
+                losses_clf += loss_clf.item()
+                losses_fkd += loss_fkd.item()
+                losses_proto += loss_proto.item()
+                losses_transfer += loss_transfer.item()
+                losses_contrast += loss_contrast.item()
+                _, preds = torch.max(logits, dim=1)
+                correct += preds.eq(targets.expand_as(preds)).cpu().sum()
+                total += len(targets)
+                #break
             scheduler.step()
-            prog_bar.set_description(f"Epoch {epoch + 1}/{self._epoch_num}, Loss: {losses_clf:.4f}, Acc: {100. * correct / total:.2f}%")
-    
+            train_acc = np.around(tensor2numpy(
+                correct)*100 / total, decimals=2)
+            if epoch % 5 != 0:
+                info = 'Task {}, Epoch {}/{} => Loss {:.3f}, Loss_clf {:.3f}, Loss_fkd {:.3f}, Loss_proto {:.3f}, Loss_transfer {:.3f}, Loss_contrast {:.3f}, Train_accy {:.2f}'.format(
+                    self._cur_task, epoch+1, self._epoch_num, losses/len(train_loader), losses_clf/len(train_loader), losses_fkd/len(train_loader), losses_proto/len(train_loader), losses_transfer/len(train_loader), losses_contrast/len(train_loader), train_acc)
+            else:
+                test_acc = self._compute_accuracy(self._network, test_loader)
+                info = 'Task {}, Epoch {}/{} => Loss {:.3f}, Loss_clf {:.3f}, Loss_fkd {:.3f}, Loss_proto {:.3f}, Loss_transfer {:.3f}, Loss_contrast {:.3f}, Train_accy {:.2f}, Test_accy {:.2f}'.format(
+                    self._cur_task, epoch+1, self._epoch_num, losses/len(train_loader), losses_clf/len(train_loader), losses_fkd/len(train_loader), losses_proto/len(train_loader), losses_transfer/len(train_loader), losses_contrast/len(train_loader), train_acc, test_acc)
+            prog_bar.set_description(info)
+            logging.info(info)
+  
     def l2loss(self,inputs,targets,mean=True):
 
         if not mean :
@@ -358,13 +379,35 @@ class FCS(BaseLearner):
         
         return logits, losses_all 
 
+    def train_with_temperatures(self, train_loader, test_loader, temperatures):
+        """
+        Train the model with varying temperature values and log average forgetting.
+        """
+        results = {}
+        for temp in temperatures:
+            self.args["contrast_T"] = temp
+            logging.info(f"Training with temperature: {temp}")
 
+            # Reset metrics for each temperature
+            self.af = []
 
+            # Train the model
+            self._train_function(train_loader, test_loader, optimizer=None, scheduler=None)
+
+            # Compute average forgetting
+            avg_forgetting = self.compute_average_forgetting()
+            results[temp] = avg_forgetting
+            logging.info(f"Temperature: {temp}, Average Forgetting: {avg_forgetting}")
+
+        return results
+
+    def compute_average_forgetting(self):
+        """
+        Compute the average forgetting metric.
+        """
+        # Placeholder implementation, replace with actual forgetting computation logic
+        return np.mean(self.af) if self.af else 0
     
-
-
-
-
     def _class_aug(self,inputs,targets,alpha=20., mix_time=4,inputs_aug=None):
         
         inputs2 = torch.stack([torch.rot90(inputs, k, (2, 3)) for k in range(4)], 1)
