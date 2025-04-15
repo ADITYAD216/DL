@@ -57,6 +57,9 @@ class FCS(BaseLearner):
 
         self.af = []
 
+        # Initialize _epoch_num with a default value
+        self._epoch_num = self.args.get("epochs", 10)  # Default to 10 if not specified
+
     def after_task(self):
         self._known_classes = self._total_classes
         self._old_network = self._network.copy().freeze()
@@ -535,4 +538,3 @@ class FCS(BaseLearner):
         scores = dists.T  # [N, nb_classes], choose the one with the smallest distance
 
         return np.argsort(scores, axis=1)[:, : self.topk], y_true  # [N, topk]
-
