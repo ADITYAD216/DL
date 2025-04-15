@@ -63,12 +63,12 @@ class BaseNet(nn.Module):
         x = self.convnet(x)
         if not isinstance(x, dict):
             x = {"features": x}  # Ensure x is a dictionary
-        out = self.fc(x["features"])
-        if isinstance(out, dict):
-            out.update(x)
+        logits = self.fc(x["features"])
+        if isinstance(logits, dict):
+            logits.update(x)
         else:
-            out = {"output": out, **x}  # Wrap output in a dictionary if needed
-        return out
+            logits = {"logits": logits, **x}  # Include logits in the dictionary
+        return logits
 
     def update_fc(self, nb_classes):
         pass
