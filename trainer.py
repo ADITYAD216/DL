@@ -112,11 +112,11 @@ def _set_device(args):
     device_type = args["device"]
     gpus = []
 
-    for device in device_type:
-        if device_type == -1:
+    for device_id in device_type:
+        if device_id == -1:
             device = torch.device("cpu")
         else:
-            device = torch.device("cuda:{}".format(device))
+            device = torch.device("cuda:{}".format(device_id))
 
         gpus.append(device)
 
