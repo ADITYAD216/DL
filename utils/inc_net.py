@@ -129,13 +129,19 @@ class FCSIncrementalNet(BaseNet):
 
     def forward(self, x):
         x = self.convnet(x)
-        out = self.fc(x["features"])
-        out.update(x)
+        features = x["features"]
+        logits = self.fc(features)
+        out = {"output": logits, **x}
+
         if hasattr(self, "gradcam") and self.gradcam:
             out["gradcam_gradients"] = self._gradcam_gradients
             out["gradcam_activations"] = self._gradcam_activations
 
         return out
+
+
+ 
+
 
     def unset_gradcam_hook(self):
         self._gradcam_hooks[0].remove()
