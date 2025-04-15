@@ -3,7 +3,7 @@ import logging
 import torch
 from torch import nn
 from convs.cifar_resnet import resnet32
-from convs.resnet import resnet18, resnet34, resnet50
+from convs.resnet import resnet18, resnet34, resnet50 ,resnet12
 from convs.ucir_cifar_resnet import resnet32 as cosine_resnet32
 from convs.ucir_resnet import resnet18 as cosine_resnet18
 from convs.ucir_resnet import resnet34 as cosine_resnet34
@@ -12,6 +12,7 @@ from convs.linears import FCSSimpleLinear
 from convs.modified_represnet import resnet18_rep,resnet34_rep
 from convs.resnet_cbam import resnet18_cbam,resnet34_cbam,resnet50_cbam
 from models.resnet12 import ResNet12
+
 
 def get_convnet(args, pretrained=False):
     name = args["convnet_type"].lower()
