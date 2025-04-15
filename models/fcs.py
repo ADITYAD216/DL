@@ -502,6 +502,10 @@ class FCS(BaseLearner):
             logging.info(f"Shape of perm_targets: {perm_targets.shape}")
 
             lams = np.random.beta(alpha, alpha, sum(mask))
+            if len(lams) == 0:
+                logging.warning("Lambda tensor is empty. Skipping this iteration.")
+                continue
+
             lams = np.where((lams < 0.4) | (lams > 0.6), 0.5, lams)
             lams = torch.from_numpy(lams).to(self._device)[:, None, None, None].float()
 
