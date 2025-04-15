@@ -1,6 +1,5 @@
 import json
 import argparse
-#Arpan
 from trainer import train
 
 
