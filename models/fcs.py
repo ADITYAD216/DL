@@ -186,7 +186,7 @@ class FCS(BaseLearner):
         with torch.no_grad():
             for class_idx in range(self._known_classes, self._total_classes):
                 data, targets, idx_dataset = self.data_manager.get_dataset(np.arange(class_idx, class_idx+1), source='train',
-                                                                    mode='test', ret_data=True)
+                                                                mode='test', ret_data=True)
                 idx_loader = DataLoader(idx_dataset, batch_size=self.args["batch_size"], shuffle=False, num_workers=4)
 
                 vectors, _ = self._extract_vectors(idx_loader)
@@ -412,8 +412,12 @@ class FCS(BaseLearner):
             # Reset metrics for each temperature
             self.af = []
 
+            # Initialize optimizer and scheduler
+            optimizer = torch.optim.SGD(self.model.parameters(), lr=self.args["lr"], weight_decay=self.args["weight_decay"])
+            scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=self.args["step_size"], gamma=self.args["gamma"])
+
             # Train the model
-            self._train_function(train_loader, test_loader, optimizer=None, scheduler=None)
+            self._train_function(train_loader, test_loader, optimizer=optimizer, scheduler=scheduler)
 
             # Compute average forgetting
             avg_forgetting = self.compute_average_forgetting()
