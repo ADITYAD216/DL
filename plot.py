@@ -48,6 +48,10 @@ dataset = datasets.FakeData(transform=transform)  # Replace FakeData with actual
 train_loader = DataLoader(dataset, batch_size=args["batch_size"], shuffle=True)
 test_loader = DataLoader(dataset, batch_size=args["batch_size"], shuffle=False)
 
+# Ensure train_loader and test_loader are not None
+if train_loader is None or test_loader is None:
+    raise ValueError("train_loader and test_loader must be initialized with valid DataLoader objects.")
+
 # Train with varying temperatures
 results = fcs_model.train_with_temperatures(train_loader, test_loader, temperatures)
 
