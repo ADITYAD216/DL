@@ -9,7 +9,7 @@ from convs.ucir_cifar_resnet import resnet32 as cosine_resnet32
 from convs.ucir_resnet import resnet18 as cosine_resnet18
 from convs.ucir_resnet import resnet34 as cosine_resnet34
 from convs.ucir_resnet import resnet50 as cosine_resnet50
-from convs.linears import SingleLinearLayer, SmallMLP
+from convs.linears import SingleLinearlayer, SmallMLP
 from convs.modified_represnet import resnet18_rep, resnet34_rep
 from convs.resnet_cbam import resnet18_cbam, resnet34_cbam, resnet50_cbam
 
@@ -72,7 +72,7 @@ class BaseNet(nn.Module):
 
     def generate_fc(self, in_dim, out_dim):
         if self.args.get("fcn_type", "single") == "single":
-            return SingleLinearLayer(in_dim, out_dim)
+            return SmallMLP(in_dim, out_dim)
         elif self.args.get("fcn_type") == "mlp":
             return SmallMLP(in_dim, 512, out_dim)
         else:
@@ -117,7 +117,7 @@ class FCSIncrementalNet(BaseNet):
         self.fc.weight.data[-increment:, :] *= gamma
 
     def generate_fc(self, in_dim, out_dim):
-        return self.args.get("fcn_type") == "mlp" and SmallMLP(in_dim, 512, out_dim) or SingleLinearLayer(in_dim, out_dim)
+        return self.args.get("fcn_type") == "mlp" and SmallMLP(in_dim, 512, out_dim) or SmallMLP(in_dim, out_dim)
 
     def forward(self, x):
         x = self.convnet(x)
@@ -156,7 +156,7 @@ class FCSNet(FCSIncrementalNet):
     def __init__(self, args, pretrained, gradcam=False):
         super().__init__(args, pretrained, gradcam)
         self.args = args
-        self.transfer = SingleLinearLayer(self.feature_dim, self.feature_dim)
+        self.transfer = SmallMLP(self.feature_dim, self.feature_dim)
 
     def update_fc(self, num_old, num_total, num_aux):
         fc = self.generate_fc(self.feature_dim, num_total + num_aux)
@@ -167,7 +167,7 @@ class FCSNet(FCSIncrementalNet):
             fc.bias.data[:num_old] = bias[:num_old]
         self.fc = fc
 
-        transfer = SingleLinearLayer(self.feature_dim, self.feature_dim)
+        transfer = SmallMLP(self.feature_dim, self.feature_dim)
         transfer.weight = nn.Parameter(torch.eye(self.feature_dim))
         transfer.bias = nn.Parameter(torch.zeros(self.feature_dim))
         self.transfer = transfer
