@@ -200,6 +200,10 @@ class FCS(BaseLearner):
     
   
     def _train_function(self, train_loader, test_loader, optimizer, scheduler):
+        # Add checks for optimizer and scheduler
+        if optimizer is None or scheduler is None:
+            raise ValueError("Optimizer and scheduler must not be None.")
+
         prog_bar = tqdm(range(self._epoch_num))
         for _, epoch in enumerate(prog_bar):
             self._network.train()
@@ -538,3 +542,4 @@ class FCS(BaseLearner):
         scores = dists.T  # [N, nb_classes], choose the one with the smallest distance
 
         return np.argsort(scores, axis=1)[:, : self.topk], y_true  # [N, topk]
+
