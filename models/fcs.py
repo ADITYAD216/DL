@@ -117,43 +117,50 @@ class FCS(BaseLearner):
         return model
     
     def _train(self, train_loader, test_loader):
-        
         resume = False
 
         if self._cur_task in range(self.args["ckpt_num"]):
             p = self.args["ckpt_path"]
             detail = p.split('/')
-            l = "{}_{}_{}_{}.pkl".format('fcs',detail[-3],detail[-2],self._cur_task)
+            l = "{}_{}_{}_{}.pkl".format('fcs', detail[-3], detail[-2], self._cur_task)
 
-            l = os.path.join(p,l)
-            print('load from {}'.format(l))
-            self._network.load_state_dict(torch.load(l)["model_state_dict"],strict=False)
-            resume = True
+            l = os.path.join(p, l)
+            if os.path.exists(l):
+                print(f'Loading checkpoint from {l}')
+                self._network.load_state_dict(torch.load(l)["model_state_dict"], strict=False)
+                resume = True
+            else:
+                print(f'Checkpoint not found: {l}. Proceeding without resuming.')
 
         self._network.to(self._device)
 
         if hasattr(self._network, "module"):
             self._network_module_ptr = self._network.module
         if not resume:
-
-            
-            if self._cur_task == 0 and self.args["dataset"]=="imagenetsubset":
+            if self._cur_task == 0 and self.args["dataset"] == "imagenetsubset":
                 self._epoch_num = self.args["epochs_init"]
-                print('use {} optimizer'.format(self._cur_task))
+                print(f'Using optimizer for task {self._cur_task}')
                 base_lr = 0.1  # Initial learning rate
-                lr_strat = [80, 120, 150] # Epochs where learning rate gets decreased
+                lr_strat = [80, 120, 150]  # Epochs where learning rate gets decreased
                 lr_factor = 0.1  # Learning rate decrease factor
                 custom_weight_decay = 5e-4  # Weight Decay
                 custom_momentum = 0.9  # Momentum
-                optimizer = torch.optim.SGD(filter(lambda p: p.requires_grad, self._network.parameters()), lr=base_lr, momentum=custom_momentum,
-                                    weight_decay=custom_weight_decay)
+                optimizer = torch.optim.SGD(
+                    filter(lambda p: p.requires_grad, self._network.parameters()),
+                    lr=base_lr, momentum=custom_momentum, weight_decay=custom_weight_decay
+                )
                 scheduler = MultiStepLR(optimizer, milestones=lr_strat, gamma=lr_factor)
-            else :
+            else:
                 self._epoch_num = self.args["epochs"]
-                optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, self._network.parameters()), lr=self.args["lr"], weight_decay=self.args["weight_decay"])
-                scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=self.args["step_size"], gamma=self.args["gamma"])
+                optimizer = torch.optim.Adam(
+                    filter(lambda p: p.requires_grad, self._network.parameters()),
+                    lr=self.args["lr"], weight_decay=self.args["weight_decay"]
+                )
+                scheduler = torch.optim.lr_scheduler.StepLR(
+                    optimizer, step_size=self.args["step_size"], gamma=self.args["gamma"]
+                )
             self._train_function(train_loader, test_loader, optimizer, scheduler)
-    
+
         self._build_protos()
     
     def _build_protos(self):
