@@ -186,7 +186,7 @@ class FCS(BaseLearner):
         with torch.no_grad():
             for class_idx in range(self._known_classes, self._total_classes):
                 data, targets, idx_dataset = self.data_manager.get_dataset(np.arange(class_idx, class_idx+1), source='train',
-                                                                mode='test', ret_data=True)
+                                                            mode='test', ret_data=True)
                 idx_loader = DataLoader(idx_dataset, batch_size=self.args["batch_size"], shuffle=False, num_workers=4)
 
                 vectors, _ = self._extract_vectors(idx_loader)
@@ -442,6 +442,10 @@ class FCS(BaseLearner):
     
     def _class_aug(self,inputs,targets,alpha=20., mix_time=4,inputs_aug=None):
         
+        # Ensure inputs have at least two dimensions before applying torch.rot90
+        if inputs.ndim < 2:
+            raise ValueError("inputs must have at least two dimensions for rotation.")
+
         inputs2 = torch.stack([torch.rot90(inputs, k, (2, 3)) for k in range(4)], 1)
         inputs2 = inputs2.view(-1, 3, inputs2.shape[-2], inputs2.shape[-1])
         targets2 = torch.stack([targets * 4 + k for k in range(4)], 1).view(-1)
