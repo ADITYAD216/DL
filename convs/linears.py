@@ -1,3 +1,5 @@
+import torch.nn as nn
+
 class SingleLinearLayer(nn.Module):
     def __init__(self, input_dim, output_dim):
         super(SingleLinearLayer, self).__init__()
