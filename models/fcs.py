@@ -198,7 +198,7 @@ class FCS(BaseLearner):
         with torch.no_grad():
             for class_idx in range(self._known_classes, self._total_classes):
                 data, targets, idx_dataset = self.data_manager.get_dataset(np.arange(class_idx, class_idx+1), source='train',
-                                                            mode='test', ret_data=True)
+                                                        mode='test', ret_data=True)
                 idx_loader = DataLoader(idx_dataset, batch_size=self.args["batch_size"], shuffle=False, num_workers=4)
 
                 vectors, _ = self._extract_vectors(idx_loader)
@@ -452,24 +452,23 @@ class FCS(BaseLearner):
         # Placeholder implementation, replace with actual forgetting computation logic
         return np.mean(self.af) if self.af else 0
     
-    def _class_aug(self,inputs,targets,alpha=20., mix_time=4,inputs_aug=None):
-        
+    def _class_aug(self, inputs, targets, alpha=20., mix_time=4, inputs_aug=None):
+    # Log the shapes of inputs and targets for debugging
+        logging.info(f"Shape of inputs: {inputs.shape}")
+        logging.info(f"Shape of targets: {targets.shape}")
+
         # Ensure inputs is a valid tensor with at least 4 dimensions
         if inputs.ndim < 4:
             raise ValueError(f"Expected inputs to have at least 4 dimensions, but got {inputs.ndim} dimensions.")
-
-        # Log the shape of inputs for debugging
-        logging.info(f"Shape of inputs before rotation: {inputs.shape}")
 
         inputs2 = torch.stack([torch.rot90(inputs, k, (2, 3)) for k in range(4)], 1)
         inputs2 = inputs2.view(-1, 3, inputs2.shape[-2], inputs2.shape[-1])
         targets2 = torch.stack([targets * 4 + k for k in range(4)], 1).view(-1)
 
-        inputs_aug2 = torch.stack([torch.rot90(inputs_aug, k, (2, 3)) for k in range(4)], 1)
-        inputs_aug2 = inputs_aug2.view(-1, 3, inputs_aug2.shape[-2], inputs_aug2.shape[-1])
-            
-                
-        
+        # Log the shapes after rotation
+        logging.info(f"Shape of inputs2: {inputs2.shape}")
+        logging.info(f"Shape of targets2: {targets2.shape}")
+
         mixup_inputs = []
         mixup_targets = []
 
@@ -477,31 +476,45 @@ class FCS(BaseLearner):
             index = torch.randperm(inputs.shape[0])
             perm_inputs = inputs[index]
             perm_targets = targets[index]
-            mask = perm_targets!= targets
+            mask = perm_targets != targets
 
             select_inputs = inputs[mask]
             select_targets = targets[mask]
             perm_inputs = perm_inputs[mask]
             perm_targets = perm_targets[mask]
 
-            lams = np.random.beta(alpha,alpha,sum(mask))
-            lams = np.where((lams<0.4)|(lams>0.6),0.5,lams)
-            lams = torch.from_numpy(lams).to(self._device)[:,None,None,None].float()
+            # Log the shapes of selected tensors
+            logging.info(f"Shape of select_inputs: {select_inputs.shape}")
+            logging.info(f"Shape of select_targets: {select_targets.shape}")
+            logging.info(f"Shape of perm_inputs: {perm_inputs.shape}")
+            logging.info(f"Shape of perm_targets: {perm_targets.shape}")
 
+            lams = np.random.beta(alpha, alpha, sum(mask))
+            lams = np.where((lams < 0.4) | (lams > 0.6), 0.5, lams)
+            lams = torch.from_numpy(lams).to(self._device)[:, None, None, None].float()
 
-            mixup_inputs.append(lams*select_inputs+(1-lams)*perm_inputs)
-            mixup_targets.append(self._map_targets(select_targets,perm_targets))
-            
+            mixup_inputs.append(lams * select_inputs + (1 - lams) * perm_inputs)
+            mixup_targets.append(self._map_targets(select_targets, perm_targets))
 
-                
-        mixup_inputs = torch.cat(mixup_inputs,dim=0)
-        
-        mixup_targets = torch.cat(mixup_targets,dim=0)
+        # Log the shapes before concatenation
+        logging.info(f"Number of mixup_inputs: {len(mixup_inputs)}")
+        logging.info(f"Number of mixup_targets: {len(mixup_targets)}")
 
-        inputs = torch.cat([inputs2,mixup_inputs],dim=0)
-        targets = torch.cat([targets2,mixup_targets],dim=0)
+        mixup_inputs = torch.cat(mixup_inputs, dim=0)
+        mixup_targets = torch.cat(mixup_targets, dim=0)
 
-        return inputs,targets,inputs_aug2
+        # Log the shapes after concatenation
+        logging.info(f"Shape of mixup_inputs: {mixup_inputs.shape}")
+        logging.info(f"Shape of mixup_targets: {mixup_targets.shape}")
+
+        inputs = torch.cat([inputs2, mixup_inputs], dim=0)
+        targets = torch.cat([targets2, mixup_targets], dim=0)
+
+        # Log the final shapes
+        logging.info(f"Final shape of inputs: {inputs.shape}")
+        logging.info(f"Final shape of targets: {targets.shape}")
+
+        return inputs, targets, inputs_aug2
     
     def _map_targets(self, select_targets, perm_targets):
         # Log the inputs for debugging
