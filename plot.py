@@ -2,6 +2,8 @@ import matplotlib.pyplot as plt
 import logging
 from models.fcs import FCS
 from utils.data_manager import DataManager
+from torch.utils.data import DataLoader
+from torchvision import datasets, transforms
 
 # Initialize logging
 logging.basicConfig(level=logging.INFO)
@@ -37,8 +39,14 @@ data_manager = DataManager(
 fcs_model = FCS(args)
 
 # Prepare data loaders
-train_loader = None  # Replace with actual DataLoader for training
-test_loader = None   # Replace with actual DataLoader for testing
+transform = transforms.Compose([
+    transforms.ToTensor(),
+    transforms.Normalize((0.5,), (0.5,))
+])
+
+dataset = datasets.FakeData(transform=transform)  # Replace FakeData with actual dataset
+train_loader = DataLoader(dataset, batch_size=args["batch_size"], shuffle=True)
+test_loader = DataLoader(dataset, batch_size=args["batch_size"], shuffle=False)
 
 # Train with varying temperatures
 results = fcs_model.train_with_temperatures(train_loader, test_loader, temperatures)
