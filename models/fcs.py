@@ -478,6 +478,10 @@ class FCS(BaseLearner):
             perm_targets = targets[index]
             mask = perm_targets != targets
 
+            if mask.sum() == 0:
+                logging.warning("Mask resulted in empty tensors. Skipping this iteration.")
+                continue
+
             select_inputs = inputs[mask]
             select_targets = targets[mask]
             perm_inputs = perm_inputs[mask]
@@ -500,15 +504,16 @@ class FCS(BaseLearner):
         logging.info(f"Number of mixup_inputs: {len(mixup_inputs)}")
         logging.info(f"Number of mixup_targets: {len(mixup_targets)}")
 
-        mixup_inputs = torch.cat(mixup_inputs, dim=0)
-        mixup_targets = torch.cat(mixup_targets, dim=0)
+        if len(mixup_inputs) > 0:
+            mixup_inputs = torch.cat(mixup_inputs, dim=0)
+            mixup_targets = torch.cat(mixup_targets, dim=0)
 
-        # Log the shapes after concatenation
-        logging.info(f"Shape of mixup_inputs: {mixup_inputs.shape}")
-        logging.info(f"Shape of mixup_targets: {mixup_targets.shape}")
+            # Log the shapes after concatenation
+            logging.info(f"Shape of mixup_inputs: {mixup_inputs.shape}")
+            logging.info(f"Shape of mixup_targets: {mixup_targets.shape}")
 
-        inputs = torch.cat([inputs2, mixup_inputs], dim=0)
-        targets = torch.cat([targets2, mixup_targets], dim=0)
+            inputs = torch.cat([inputs2, mixup_inputs], dim=0)
+            targets = torch.cat([targets2, mixup_targets], dim=0)
 
         # Log the final shapes
         logging.info(f"Final shape of inputs: {inputs.shape}")
@@ -538,6 +543,7 @@ class FCS(BaseLearner):
         correct, total = 0, 0
         for i, (_, inputs, targets) in enumerate(loader):
             inputs = inputs.to(self._device)
+
             with torch.no_grad():
                 outputs = model(inputs)["logits"][:,:self._total_classes*4][:,::4]
             predicts = torch.max(outputs, dim=1)[1]
