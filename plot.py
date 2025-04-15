@@ -27,6 +27,7 @@ args = {
     "log_dir": "./logs",
     "log_name": "temperature_analysis",
     "model_name": "FCS",
+    "convnet_type": "resnet18_cbam",
 }
 
 data_manager = DataManager(
