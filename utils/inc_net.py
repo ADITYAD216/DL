@@ -3,25 +3,20 @@ import logging
 import torch
 from torch import nn
 from convs.cifar_resnet import resnet32
-from convs.resnet import resnet18, resnet34, resnet50 ,resnet12
+from convs.resnet import resnet18, resnet34, resnet50
 from convs.ucir_cifar_resnet import resnet32 as cosine_resnet32
 from convs.ucir_resnet import resnet18 as cosine_resnet18
 from convs.ucir_resnet import resnet34 as cosine_resnet34
 from convs.ucir_resnet import resnet50 as cosine_resnet50
-from convs.linears import FCSSimpleLinear
+from convs.linears import FCSSimpleLinear, SingleLinearLayer, SmallMLP
 from convs.modified_represnet import resnet18_rep,resnet34_rep
 from convs.resnet_cbam import resnet18_cbam,resnet34_cbam,resnet50_cbam
-from models.resnet12 import ResNet12
 
 
 def get_convnet(args, pretrained=False):
     name = args["convnet_type"].lower()
     if name == "resnet32":
         return resnet32()
-    elif name == "resnet50":
-        return resnet50(pretrained=pretrained, args=args)
-    elif name == "resnet12":
-        return resnet12(pretrained=pretrained, args=args)
     elif name == "resnet18":
         return resnet18(pretrained=pretrained,args=args)
     elif name == "resnet34":
@@ -44,9 +39,10 @@ def get_convnet(args, pretrained=False):
         return resnet34_cbam(pretrained=pretrained,args=args)
     elif name == "resnet50_cbam":
         return resnet50_cbam(pretrained=pretrained,args=args)
+    elif name == "resnet12":
+        return resnet12(pretrained=pretrained, args=args)
     else:
         raise NotImplementedError("Unknown type {}".format(name))
-
 
 
 class BaseNet(nn.Module):
@@ -81,7 +77,12 @@ class BaseNet(nn.Module):
         pass
 
     def generate_fc(self, in_dim, out_dim):
-        pass
+        if self.args.get("fcn_type", "single") == "single":
+            return SingleLinearLayer(in_dim, out_dim)
+        elif self.args.get("fcn_type") == "mlp":
+            return SmallMLP(in_dim, 512, out_dim)
+        else:
+            raise ValueError("Unsupported FCN type: {}".format(self.args.get("fcn_type")))
 
     def copy(self):
         return copy.deepcopy(self)
