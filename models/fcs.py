@@ -221,11 +221,13 @@ class FCS(BaseLearner):
                 else:
                     _, inputs, targets, inputs_aug = instance
 
-                inputs, targets = inputs.to(
-                    self._device, non_blocking=True), targets.to(self._device, non_blocking=True)
-                #image_q, image_k = image_q.to(
-                #    self._device, non_blocking=True), image_k.to(self._device, non_blocking=True)
-                    
+                inputs = inputs.to(self._device, non_blocking=True)
+                # Ensure targets and inputs_aug are not None before processing
+                if targets is not None:
+                    targets = targets.to(self._device, non_blocking=True)
+                if inputs_aug is not None:
+                    inputs_aug = inputs_aug.to(self._device, non_blocking=True)
+
                 inputs,targets,inputs_aug = self._class_aug(inputs,targets,inputs_aug=inputs_aug)
 
                 logits, losses_all  = self._compute_il2a_loss(inputs,targets,image_k=inputs_aug)
