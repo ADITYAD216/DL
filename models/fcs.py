@@ -39,6 +39,7 @@ class FCS(BaseLearner):
 
         # Ensure required keys are present in args with default values
         self.args.setdefault("lambda_contrast", 1.0)  # Default value for lambda_contrast
+        self.args.setdefault("temp", 0.1)  # Default value for temp
 
         self._network = FCSNet(args, False)
         self._protos = []
