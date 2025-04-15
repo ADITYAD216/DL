@@ -62,9 +62,12 @@ class BaseNet(nn.Module):
     def forward(self, x):
         x = self.convnet(x)
         if not isinstance(x, dict):
-            x = {"features": x}
+            x = {"features": x}  # Ensure x is a dictionary
         out = self.fc(x["features"])
-        out.update(x)
+        if isinstance(out, dict):
+            out.update(x)
+        else:
+            out = {"output": out, **x}  # Wrap output in a dictionary if needed
         return out
 
     def update_fc(self, nb_classes):
