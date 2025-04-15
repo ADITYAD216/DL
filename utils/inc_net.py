@@ -8,7 +8,7 @@ from convs.ucir_cifar_resnet import resnet32 as cosine_resnet32
 from convs.ucir_resnet import resnet18 as cosine_resnet18
 from convs.ucir_resnet import resnet34 as cosine_resnet34
 from convs.ucir_resnet import resnet50 as cosine_resnet50
-from convs.linears import FCSSimpleLinear, SingleLinearLayer, SmallMLP
+from convs.linears import SingleLinearLayer, SmallMLP
 from convs.modified_represnet import resnet18_rep,resnet34_rep
 from convs.resnet_cbam import resnet18_cbam,resnet34_cbam,resnet50_cbam
 
