@@ -442,9 +442,9 @@ class FCS(BaseLearner):
     
     def _class_aug(self,inputs,targets,alpha=20., mix_time=4,inputs_aug=None):
         
-        # Ensure inputs have at least two dimensions before applying torch.rot90
-        if inputs.ndim < 2:
-            raise ValueError("inputs must have at least two dimensions for rotation.")
+        # Ensure inputs is a valid tensor with at least 4 dimensions
+        if inputs.ndim < 4:
+            raise ValueError(f"Expected inputs to have at least 4 dimensions, but got {inputs.ndim} dimensions.")
 
         # Log the shape of inputs for debugging
         logging.info(f"Shape of inputs before rotation: {inputs.shape}")
