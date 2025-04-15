@@ -7,6 +7,8 @@ from utils.data_manager import DataManager
 from utils.toolkit import count_parameters
 import os
 import json
+import time
+
 
 def train(args):
     seed_list = copy.deepcopy(args["seed"])
@@ -61,6 +63,13 @@ def _train(args):
     model = factory.get_model(args["model_name"], args)
 
     cnn_curve = {"top1": [], "top5": []}
+    metrics = {
+        "final_accuracy": None,
+        "average_forgetting": None,
+        "training_time": None,
+    }
+
+    start_time = time.time()
 
     for task in range(data_manager.nb_tasks):
         logging.info("All params: {}".format(count_parameters(model._network)))
@@ -78,23 +87,39 @@ def _train(args):
 
         logging.info("CNN top1 curve: {}".format(cnn_curve["top1"]))
         logging.info("CNN top5 curve: {}".format(cnn_curve["top5"]))
-        
+
         cnn_accy, nme_accy = model.eval_task(only_new=True)
         cnn_accy, nme_accy = model.eval_task(only_old=True)
 
-        
         model.after_task()
-        if args["is_task0"] :
-            break 
+        if args["is_task0"]:
+            break
+
+    end_time = time.time()
+    metrics["training_time"] = end_time - start_time
+    metrics["final_accuracy"] = cnn_curve["top1"][-1]
+    metrics["average_forgetting"] = sum(
+        [
+            max(cnn_curve["top1"][:i]) - acc
+            for i, acc in enumerate(cnn_curve["top1"], start=1)
+        ]
+    ) / len(cnn_curve["top1"])
+
+    logging.info("Metrics: {}".format(metrics))
+
+
 def _set_device(args):
     device_type = args["device"]
     gpus = []
 
-    for device in device_type:
-        if device_type == -1:
+    for device_id in device_type:
+        logging.info("Processing device_id: {}".format(device_id))  # Log the device_id for debugging
+        if device_id == -1:
             device = torch.device("cpu")
+        elif isinstance(device_id, str) and device_id.startswith("cuda:"):
+            device = torch.device(device_id)  # Use the device_id as is if it already has 'cuda:'
         else:
-            device = torch.device("cuda:{}".format(device))
+            device = torch.device("cuda:{}".format(device_id))
 
         gpus.append(device)
 
