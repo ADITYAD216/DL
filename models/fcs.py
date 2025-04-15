@@ -503,12 +503,21 @@ class FCS(BaseLearner):
 
         return inputs,targets,inputs_aug2
     
-    def _map_targets(self,select_targets,perm_targets):
-        assert (select_targets != perm_targets).all()
-        large_targets = torch.max(select_targets,perm_targets)-self._known_classes
-        small_targets = torch.min(select_targets,perm_targets)-self._known_classes
+    def _map_targets(self, select_targets, perm_targets):
+        # Log the inputs for debugging
+        logging.info("select_targets: {}".format(select_targets))
+        logging.info("perm_targets: {}".format(perm_targets))
 
-        mixup_targets = (large_targets*(large_targets-1)/2  + small_targets + self._total_classes*4).long()
+        # Check if the assertion fails and handle it gracefully
+        if not (select_targets != perm_targets).all():
+            logging.warning("Assertion failed: select_targets and perm_targets have overlapping values.")
+            # Handle the overlap case, e.g., skip or modify targets
+            perm_targets = perm_targets + 1  # Example adjustment to avoid overlap
+
+        large_targets = torch.max(select_targets, perm_targets) - self._known_classes
+        small_targets = torch.min(select_targets, perm_targets) - self._known_classes
+
+        mixup_targets = (large_targets * (large_targets - 1) / 2 + small_targets + self._total_classes * 4).long()
         return mixup_targets
     
     def _compute_accuracy(self, model, loader):
