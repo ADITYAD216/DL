@@ -446,6 +446,9 @@ class FCS(BaseLearner):
         if inputs.ndim < 2:
             raise ValueError("inputs must have at least two dimensions for rotation.")
 
+        # Log the shape of inputs for debugging
+        logging.info(f"Shape of inputs before rotation: {inputs.shape}")
+
         inputs2 = torch.stack([torch.rot90(inputs, k, (2, 3)) for k in range(4)], 1)
         inputs2 = inputs2.view(-1, 3, inputs2.shape[-2], inputs2.shape[-1])
         targets2 = torch.stack([targets * 4 + k for k in range(4)], 1).view(-1)
