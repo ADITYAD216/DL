@@ -11,7 +11,7 @@ from convs.ucir_resnet import resnet50 as cosine_resnet50
 from convs.linears import FCSSimpleLinear
 from convs.modified_represnet import resnet18_rep,resnet34_rep
 from convs.resnet_cbam import resnet18_cbam,resnet34_cbam,resnet50_cbam
-
+from models.resnet12 import ResNet12
 
 def get_convnet(args, pretrained=False):
     name = args["convnet_type"].lower()
