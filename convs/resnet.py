@@ -11,7 +11,7 @@ except:
 
 __all__ = ['ResNet', 'resnet18', 'resnet34', 'resnet50', 'resnet101',
            'resnet152', 'resnext50_32x4d', 'resnext101_32x8d',
-           'wide_resnet50_2', 'wide_resnet101_2','resnet12']
+           'wide_resnet50_2', 'wide_resnet101_2']
 
 
 model_urls = {
@@ -268,16 +268,6 @@ def resnet18(pretrained=False, progress=True, **kwargs):
     """
     return _resnet('resnet18', BasicBlock, [2, 2, 2, 2], pretrained, progress,
                    **kwargs)
-    
-def resnet12(pretrained=False, progress=True, **kwargs):
-    r"""ResNet-12 model (custom implementation or based on ResNet-18) from
-    a smaller ResNet backbone.
-    
-    Args:
-        pretrained (bool): If True, returns a model pre-trained on ImageNet
-        progress (bool): If True, displays a progress bar of the download to stderr
-    """
-    return _resnet('resnet12', Bottleneck, [2, 3, 4, 2], pretrained, progress, **kwargs)
 
 
 def resnet34(pretrained=False, progress=True, **kwargs):
@@ -380,3 +370,8 @@ def wide_resnet101_2(pretrained=False, progress=True, **kwargs):
     kwargs['width_per_group'] = 64 * 2
     return _resnet('wide_resnet101_2', Bottleneck, [3, 4, 23, 3],
                    pretrained, progress, **kwargs)
+
+
+def resnet12(pretrained=False, progress=True, **kwargs):
+    """Basic ResNet-12 implementation."""
+    return _resnet('resnet12', BasicBlock, [1, 1, 1, 1], pretrained, progress, **kwargs)
