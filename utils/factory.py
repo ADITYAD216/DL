@@ -6,4 +6,4 @@ def get_model(model_name, args):
     if name == "fcs":
         return FCS(args)
     else:
-        assert 0
+        assert 0, f"Unsupported model name: {model_name}"
