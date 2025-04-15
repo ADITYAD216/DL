@@ -268,6 +268,16 @@ def resnet18(pretrained=False, progress=True, **kwargs):
     """
     return _resnet('resnet18', BasicBlock, [2, 2, 2, 2], pretrained, progress,
                    **kwargs)
+    
+def resnet12(pretrained=False, progress=True, **kwargs):
+    r"""ResNet-12 model (custom implementation or based on ResNet-18) from
+    a smaller ResNet backbone.
+    
+    Args:
+        pretrained (bool): If True, returns a model pre-trained on ImageNet
+        progress (bool): If True, displays a progress bar of the download to stderr
+    """
+    return _resnet('resnet12', Bottleneck, [2, 3, 4, 2], pretrained, progress, **kwargs)
 
 
 def resnet34(pretrained=False, progress=True, **kwargs):
