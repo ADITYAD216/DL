@@ -36,14 +36,20 @@ class FCS(BaseLearner):
     def __init__(self, args):
         super().__init__(args)
         self.args = args
+
+        # Ensure required keys are present in args with default values
+        self.args.setdefault("lambda_contrast", 1.0)  # Default value for lambda_contrast
+
         self._network = FCSNet(args, False)
         self._protos = []
         self._covs = []
         self._radiuses = []
-        init_cls = 0 if args ["init_cls"] == args["increment"] else args["init_cls"]
+        init_cls = 0 if args["init_cls"] == args["increment"] else args["init_cls"]
         self.log_dir = self.args["log_dir"]
-        self.logs_name = "{}/{}/{}/{}/{}".format(args["model_name"],args["dataset"], init_cls, args['increment'],args['log_name'])
-        self.logs_name = os.path.join(self.log_dir,self.logs_name)
+        self.logs_name = "{}/{}/{}/{}/{}".format(
+            args["model_name"], args["dataset"], init_cls, args["increment"], args["log_name"]
+        )
+        self.logs_name = os.path.join(self.log_dir, self.logs_name)
 
         self.contrast_loss = SupContrastive()
         self.encoder_k = FCSNet(args, False).convnet
