@@ -15,43 +15,32 @@ from convs.resnet_cbam import resnet18_cbam,resnet34_cbam,resnet50_cbam
 
 def get_convnet(args, pretrained=False):
     name = args["convnet_type"].lower()
-    
-    # Standard ResNet variants
     if name == "resnet32":
         return resnet32()
     elif name == "resnet18":
-        return resnet18(pretrained=pretrained, args=args)
+        return resnet18(pretrained=pretrained,args=args)
     elif name == "resnet34":
-        return resnet34(pretrained=pretrained, args=args)
+        return resnet34(pretrained=pretrained,args=args)
     elif name == "resnet50":
-        return resnet50(pretrained=pretrained, args=args)
-    
-    # Cosine similarity-based ResNet variants
+        return resnet50(pretrained=pretrained,args=args)
     elif name == "cosine_resnet18":
-        return cosine_resnet18(pretrained=pretrained, args=args)
+        return cosine_resnet18(pretrained=pretrained,args=args)
     elif name == "cosine_resnet32":
         return cosine_resnet32()
     elif name == "cosine_resnet34":
-        return cosine_resnet34(pretrained=pretrained, args=args)
+        return cosine_resnet34(pretrained=pretrained,args=args)
     elif name == "cosine_resnet50":
-        return cosine_resnet50(pretrained=pretrained, args=args)
-    
-    # ResNet with additional modifications (e.g., CBAM, Reparameterized)
+        return cosine_resnet50(pretrained=pretrained,args=args)
     elif name == "resnet18_rep":
-        return resnet18_rep(pretrained=pretrained, args=args)
+        return resnet18_rep(pretrained=pretrained,args=args)
     elif name == "resnet18_cbam":
-        return resnet18_cbam(pretrained=pretrained, args=args)
+        return resnet18_cbam(pretrained=pretrained,args=args)
     elif name == "resnet34_cbam":
-        return resnet34_cbam(pretrained=pretrained, args=args)
+        return resnet34_cbam(pretrained=pretrained,args=args)
     elif name == "resnet50_cbam":
-        return resnet50_cbam(pretrained=pretrained, args=args)
-    
-    # Custom ResNet-12 implementation (ensure you have it implemented elsewhere)
-    elif name == "resnet12":
-        return resnet12(pretrained=pretrained, args=args)  # Add your custom ResNet-12 implementation
-    
+        return resnet50_cbam(pretrained=pretrained,args=args)
     else:
-        raise NotImplementedError(f"Unknown type {name}")
+        raise NotImplementedError("Unknown type {}".format(name))
 
 
 
