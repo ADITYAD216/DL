@@ -61,18 +61,12 @@ class BaseNet(nn.Module):
 
     def forward(self, x):
         x = self.convnet(x)
-        out = self.fc(x["features"])
-        """
-        {
-            'fmaps': [x_1, x_2, ..., x_n],
-            'features': features
-            'logits': logits
-        }
-        """
         if isinstance(x, dict):
+            out = self.fc(x["features"])
             out.update(x)
         else:
-            out["features"] = x
+            out = {"features": x}
+            out["logits"] = self.fc(x)
 
         return out
 
