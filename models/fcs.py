@@ -76,21 +76,27 @@ class FCS(BaseLearner):
         task_size = self.data_manager.get_task_size(self._cur_task)
         self._total_classes = self._known_classes + task_size
 
-        self._network.update_fc(self._known_classes*4, self._total_classes*4, int((task_size-1)*task_size/2))
+        self._network.update_fc(self._known_classes * 4, self._total_classes * 4, int((task_size - 1) * task_size / 2))
         self._network_module_ptr = self._network
         logging.info('Learning on {}-{}'.format(self._known_classes, self._total_classes))
 
         logging.info('All params: {}'.format(count_parameters(self._network)))
         logging.info('Trainable params: {}'.format(count_parameters(self._network, True)))
 
-        train_dataset = data_manager.get_dataset(np.arange(self._known_classes, self._total_classes), source='train',
-                                                 mode='train', appendent=self._get_memory(), args=self.args)
+        train_dataset = data_manager.get_dataset(
+            np.arange(self._known_classes, self._total_classes),
+            source='train',
+            mode='train',
+            appendent=self._get_memory(),
+            args=self.args
+        )
         batch_size = self.args["batch_size"]
 
         while True:
             try:
                 self.train_loader = DataLoader(
-                    train_dataset, batch_size=batch_size, shuffle=True, num_workers=self.args["num_workers"], pin_memory=True)
+                    train_dataset, batch_size=batch_size, shuffle=True, num_workers=self.args["num_workers"], pin_memory=True
+                )
                 break
             except RuntimeError as e:
                 if "out of memory" in str(e):
@@ -103,9 +109,11 @@ class FCS(BaseLearner):
                     raise e
 
         test_dataset = data_manager.get_dataset(
-            np.arange(0, self._total_classes), source='test', mode='test')
+            np.arange(0, self._total_classes), source='test', mode='test'
+        )
         self.test_loader = DataLoader(
-            test_dataset, batch_size=self.args["batch_size"], shuffle=False, num_workers=self.args["num_workers"])
+            test_dataset, batch_size=max(1, batch_size // 2), shuffle=False, num_workers=self.args["num_workers"]
+        )
 
         if len(self._multiple_gpus) > 1:
             self._network = nn.DataParallel(self._network, self._multiple_gpus)
