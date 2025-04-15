@@ -109,18 +109,23 @@ def _train(args):
 
 
 def _set_device(args):
-    device_type = args["device"]
+    devs = args["device"]
     gpus = []
 
-    for device_id in device_type:
-        if device_id == -1:
-            device = torch.device("cpu")
+    if not isinstance(devs, list):
+        devs = [devs]
+
+    for dev in devs:
+        if isinstance(dev, torch.device):
+            gpus.append(dev)
+        elif isinstance(dev, int):
+            gpus.append(torch.device("cpu") if dev == -1 else torch.device(f"cuda:{dev}"))
+        elif isinstance(dev, str):
+            gpus.append(torch.device(dev))
         else:
-            device = torch.device("cuda:{}".format(device_id))
+            raise ValueError(f"Unsupported device type: {type(dev)} — {dev}")
 
-        gpus.append(device)
-
-    args["device"] = gpus
+    args["device"]=gpus
 
 
 def _set_random():
